@@ -14,24 +14,33 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import EventTable from "@/sections/admin/adminEvent/EventTable";
+import { userInput } from '@/form'
+
 //firebase add event function
 import { useState } from "react";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 
 const AdminEvents = ({ inputs, title }) => {
   const [file, setFile] = useState("");
+  const [data, setData] = useState({})
+
+
+  const handleInput = (e) => {
+    const id = e.target.id;
+    const value = e.target.value;
+
+    setData({...data, [id]:value})
+  }
+
+  console.log(data)
+
+  // Function to add events to firebase db
   const addEvent = async (e) => {
     try{
-      const res = await setDoc(doc(db, "rafikistry", "title"), {
-        title: "Pamoja Tupendane",
-        date: "April 6 2024",
-        start: "10:00 am",
-        ends: "4:00 pm",
-        venue: "Rafikistry",
-        link: "https:justallan.netlify.app",
-        description:
-          "d,fkdsjfkjsdlfjsdljflksdjfljlsk oshfsdl slfjsl flshidf skadalhflaeh lfs",
-        image: "",
+      await setDoc(doc(db, "events", data.title), {
+      ...data, 
+
+      timeStamp: serverTimestamp(),
       });
     } catch(err) {
       console.log(err)
@@ -58,118 +67,55 @@ const AdminEvents = ({ inputs, title }) => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Create New Event</AlertDialogTitle>
                   <AlertDialogDescription>
-                    <form
+                  <form
                       action=""
                       onSubmit={addEvent}
                       className="flex flex-col gap-5 mt-10"
                     >
-                      <div className="relative">
-                        <label
-                          for="title"
-                          className="absolute -top-2 left-2 px-2 bg-white text-black"
-                        >
-                          Event Title
-                        </label>
-                        <Input
-                          id="title"
-                          required
-                          className="border-muted-foreground/50"
-                        />
-                      </div>
-
-                      <div className="relative">
-                        <label
-                          for="date"
-                          className="absolute -top-2 left-2 px-2 bg-white text-black"
-                        >
-                          Event Date
-                        </label>
-                        <Input
-                          id="date"
-                          required
-                          className="border-muted-foreground/50"
-                        />
-                      </div>
-
-                      <div className="flex gap-3 lg:gap-0 justify-between">
-                        <div className="relative">
+                      {/* Map inputs to userInput array */}
+                      {userInput.map((input) => (
+                        <div key={input.id} className="relative">
                           <label
-                            for="starts"
+                            htmlFor={input.id}
                             className="absolute -top-2 left-2 px-2 bg-white text-black"
                           >
-                            Starts
+                            {input.label}
                           </label>
-                          <Input
-                            id="starts"
-                            required
-                            className="border-muted-foreground/50"
-                          />
+                          {/* Render textarea for description, and styled inputs for start and end */}
+                          {input.id === "eventDescription" ? (
+                            <Textarea
+                              rows="5"
+                              required
+                              className="border-muted-foreground/50"
+                              id={input.id}
+                              onChange={handleInput}
+                            ></Textarea>
+                          ) : (
+                            <Input
+                              id={input.id}
+                              required
+                              onChange={handleInput}
+                              className="border-muted-foreground/50"
+                              type={input.type}
+                            />
+                          )}
                         </div>
-                        <div className="relative">
-                          <label
-                            for="ends"
-                            className="absolute -top-2 left-2 px-2 bg-white text-black"
-                          >
-                            Ends
-                          </label>
-                          <Input
-                            id="ends"
-                            required
-                            className="border-muted-foreground/50"
-                          />
-                        </div>
-                      </div>
+                      ))}
 
-                      <div className="relative">
-                        <label
-                          for="venue"
-                          className="absolute -top-2 left-2 px-2 bg-white text-black"
-                        >
-                          Event Venue
-                        </label>
-                        <Input
-                          id="venue"
-                          required
-                          className="border-muted-foreground/50"
-                        />
-                      </div>
-                      <div className="relative">
-                        <label
-                          for="link"
-                          className="absolute -top-2 left-2 px-2 bg-white text-black "
-                        >
-                          Event Link
-                        </label>
-                        <Input
-                          id="link"
-                          className="border-muted-foreground/50"
-                        />
-                      </div>
-
-                      <div className="relative">
-                        <label
-                          for="description"
-                          className="absolute -top-2 left-2 px-2 bg-white text-black "
-                        >
-                          Event Description
-                        </label>
-                        <Textarea
-                          rows="5"
-                          required
-                          className="border-muted-foreground/50"
-                          id="description"
-                        ></Textarea>
-                      </div>
-
+                      {/* File input */}
                       <div className="relative">
                         <Input
                           type="file"
-                          id="link"
+                          id="eventImage"
+                          onChange = {(e) => setFile(e.target.file[0])}
                           className="border-muted-foreground/50"
                         />
                       </div>
+                      {/* AlertDialogFooter with Cancel and Create buttons */}
                       <AlertDialogFooter className="flex">
-                        <AlertDialogCancel className="border border-black">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="border border-black">
+                          Cancel
+                        </AlertDialogCancel>
                         <Button type="submit">Create</Button>
                       </AlertDialogFooter>
                     </form>
